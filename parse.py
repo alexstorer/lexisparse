@@ -87,9 +87,9 @@ def main():
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         if args['metadata'] is not None:
-            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename']+args['metadata'])
+            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile']+args['metadata'])
         else:
-            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename'])
+            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile'])
         dw.writeheader()
     else:
         fcsv = False
@@ -135,6 +135,7 @@ def main():
                 if fcsv:
                     art.pop('text')
                     art['filename'] = fname
+                    art['originalfile'] = f
                     dw.writerow(art)
     if fcsv:
         fcsv.close()
