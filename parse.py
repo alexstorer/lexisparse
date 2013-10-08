@@ -63,6 +63,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
         else:
             header = ''
             body = s
+            print "*** Marker", topmarker, "not found in article", i+1
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -70,6 +71,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
         else:
             footer = ''
             body = body
+            print "*** Marker", bottommarker, "not found in article", i+1
                     
         d = dict.fromkeys(colnames)
         d['text'] = body.strip()
@@ -99,21 +101,15 @@ def main():
     elif args['file'] is not None:
         files = args['file']
 
+    fieldnames = []
+    if args['outfiles'] is not None:
+        fieldnames += ['filename','originalfile']
+    if args['metadata'] is not None:
+        fieldnames += args['metadata']
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
-        if args['metadata'] is not None:
-            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile']+args['metadata'])
-        else:
-            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile'])
-        fieldnames = []
-        if args['outfiles'] is not None:
-            fieldnames += ['filename','originalfile']
-        if args['metadata'] is not None:
-            fieldnames += args['metadata']
-        if args["csvfile"] is not None:
-            fcsv = open(args["csvfile"][0],'w')
-            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
-            dw.writeheader()
+        dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
+        dw.writeheader()
     else:
         fcsv = False
 
