@@ -37,9 +37,24 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
     bottommarker -- The first piece of metadata after an article (default: "LOAD-DATE")
     colnames -- The list of metadata names in a list (default: ["LENGTH"])
     """
+
+    if colnames is None or len(colnames)==0:
+        colnames = ["LENGTH"]
+    # process the column names for the copyright line
+    if colnames is not None and len(colnames)>0:
+        oldcolnames = colnames
+        colnames = []
+        docopyright = False
+        for c in oldcolnames:
+            if c.upper() != 'COPYRIGHT':
+                colnames.append(c)
+            else:
+                # copyright is handled differently, but people can enter it the same way
+                docopyright = True
+        
     allsplits = re.split("\d+ of \d+ DOCUMENTS.+?",fullstr)
     articles = []
-    for s in allsplits[1:]:
+    for i,s in enumerate(allsplits[1:]):
         #import code; code.interact(local=locals())
         if topmarker is not None and re.search("\n"+topmarker+".+?\n",s) is not None:
             headersplit = re.split("\n"+topmarker+".+?\n",s)
@@ -49,7 +64,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             header = ''
             body = s
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
-            bottomsplit = re.split("\n"+topmarker+".+?\n",body)
+            bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
             footer = bottomsplit[1]
         else:
@@ -62,6 +77,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             res = re.findall("\n"+c+":(.+)?\r",s)
             if len(res)>0:
                 d[c] = res[0].strip()
+        if docopyright:
+            d['COPYRIGHT'] = re.findall('\n\s+Copyright\s+(.*)\n',s,flags=re.IGNORECASE)[0].strip()
         articles.append(d)
     return articles
     
@@ -73,11 +90,9 @@ def main():
     parser.add_argument('-c','--csvfile', help='the csv file containing the metadata', required=False, nargs=1)
     parser.add_argument('-o','--outfiles', help='the directory to write individual articles to', required=False, nargs=1)
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
-    parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)    
+    parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
 
     args = vars(parser.parse_args())
-
-    #print args
 
     if args['directory'] is not None:
         files = glob.glob(args['directory'][0]+'/*.txt') + glob.glob(args['directory'][0]+'/*.TXT')
@@ -90,7 +105,15 @@ def main():
             dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile']+args['metadata'])
         else:
             dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=['filename','originalfile'])
-        dw.writeheader()
+        fieldnames = []
+        if args['outfiles'] is not None:
+            fieldnames += ['filename','originalfile']
+        if args['metadata'] is not None:
+            fieldnames += args['metadata']
+        if args["csvfile"] is not None:
+            fcsv = open(args["csvfile"][0],'w')
+            dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
+            dw.writeheader()
     else:
         fcsv = False
 
@@ -111,8 +134,6 @@ def main():
             bend = None         
             
     outputs = []
-
-    
 
     counter = 0
     for f in files:
@@ -137,6 +158,11 @@ def main():
                     art['filename'] = fname
                     art['originalfile'] = f
                     dw.writerow(art)
+        elif fcsv:
+            for art in outputs:
+                art.pop('text')
+                dw.writerow(art)
+            
     if fcsv:
         fcsv.close()
         
