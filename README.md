@@ -6,6 +6,7 @@ A simple tool to process plain text output from Lexis Nexis news searches
 Requirements
 ---
 * Python 2.7 or higher
+
 _It is possible to write a backward compatible version if necessary_
 
 
@@ -21,6 +22,13 @@ Features
 Example Call
 ----------------
 `python parse.py -d docs/ -b LENGTH None -c tjtest.csv -o docs/ -m LOAD-DATE LENGTH PUBLICATION-TYPE LANGAUGE SECTION`
+
+This asks the script to...
+
+Read in documents from the `docs` directory, and write out documents to the `docs` directory.  Write an index file including metadata entitled `tjtest.csv`.  Document bodies begin with "LENGTH:" but do not have a consistent ending string.
+
+Full Options
+--------
 
 * `-d` is where the script will look for your Lexis Nexis text files
 * `-b` specifies the boundaries above and below the article text (None can be used to include everything above or below)
