@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Some functions that will help with parsing lexisnexis results
 import sys
 import getopt
@@ -63,7 +64,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
         else:
             header = ''
             body = s
-            print "*** Marker", topmarker, "not found in article", i+1
+            if topmarker is not None:
+                print "*** Marker", topmarker, "not found in article", i+1
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -71,7 +73,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
         else:
             footer = ''
             body = body
-            print "*** Marker", bottommarker, "not found in article", i+1
+            if bottommarker is not None:
+                print "*** Marker", bottommarker, "not found in article", i+1
                     
         d = dict.fromkeys(colnames)
         d['text'] = body.strip()
@@ -80,7 +83,10 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             if len(res)>0:
                 d[c] = res[0].strip()
         if docopyright:
-            d['COPYRIGHT'] = re.findall('\n\s+Copyright\s+(.*)\n',s,flags=re.IGNORECASE)[0].strip()
+            try:
+                d['COPYRIGHT'] = re.findall('\n\s+Copyright|©\s+(.*)\n',s,flags=re.IGNORECASE)[0].strip()
+            except:
+                print "*** Copyright line not found in article", i+1
         articles.append(d)
     return articles
     
