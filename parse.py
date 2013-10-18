@@ -84,7 +84,9 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 d[c] = res[0].strip()
         if docopyright:
             try:
-                d['COPYRIGHT'] = re.findall('\n\s+Copyright|©\s+(.*)\n',s,flags=re.IGNORECASE)[0].strip()
+                #import code; code.interact(local=locals())
+                copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
+                d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
                 print "*** Copyright line not found in article", i+1
         articles.append(d)
