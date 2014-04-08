@@ -6,6 +6,7 @@ import re
 import glob
 import argparse
 import csv
+import os.path
 
 def getcolumns(fullstr,percent=10):
     """
@@ -23,9 +24,9 @@ def getcolumns(fullstr,percent=10):
             d[c] += 1
         else:
             d[c] = 1
-    
+
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
-    
+
 def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
     """
     Return a list of dictionaries containing articles and metadata.
@@ -52,7 +53,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             else:
                 # copyright is handled differently, but people can enter it the same way
                 docopyright = True
-        
+
     allsplits = re.split("\d+ of \d+ DOCUMENTS.+?",fullstr)
     articles = []
     for i,s in enumerate(allsplits[1:]):
@@ -75,7 +76,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             body = body
             if bottommarker is not None:
                 print "*** Marker", bottommarker, "not found in article", i+1
-                    
+
         d = dict.fromkeys(colnames)
         d['text'] = body.strip()
         for c in colnames:
@@ -91,10 +92,10 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 print "*** Copyright line not found in article", i+1
         articles.append(d)
     return articles
-    
+
 def main():
     parser = argparse.ArgumentParser(description='Parse output from Lexis Nexis.')
-    group = parser.add_mutually_exclusive_group(required=True)    
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d','--directory', help='the path containing multiple lexis nexis files (e.g. /users/me/data)', required=False, nargs=1)
     group.add_argument('-f','--file', help='individual file(s) to process (e.g. /Users/jdoe/Downloads/foo.txt)', required=False, nargs='*')
     parser.add_argument('-c','--csvfile', help='the csv file containing the metadata', required=False, nargs=1)
@@ -105,7 +106,7 @@ def main():
     args = vars(parser.parse_args())
 
     if args['directory'] is not None:
-        files = glob.glob(args['directory'][0]+'/*.txt') + glob.glob(args['directory'][0]+'/*.TXT')
+        files = glob.glob(args['directory'][0]+os.path.sep+'*.txt') + glob.glob(args['directory'][0]+os.path.sep+'*.TXT')
     elif args['file'] is not None:
         files = args['file']
 
@@ -125,18 +126,18 @@ def main():
         bstart = args["boundaries"][0]
         if bstart == 'None':
             bstart = None
-        bend = args["boundaries"][1]        
+        bend = args["boundaries"][1]
         if bend == 'None':
-            bend = None         
+            bend = None
 
     if args["boundaries"] is not None:
         bstart = args["boundaries"][0]
         if bstart == 'None':
             bstart = None
-        bend = args["boundaries"][1]        
+        bend = args["boundaries"][1]
         if bend == 'None':
-            bend = None         
-            
+            bend = None
+
     outputs = []
 
     counter = 0
@@ -152,7 +153,7 @@ def main():
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
-                fname = "{direc}/{c:08d}.txt".format(direc=args['outfiles'][0],c=counter)
+                fname = "{direc}{sep}{c:08d}.txt".format(direc=args['outfiles'][0],,sep=os.path.sep,c=counter)
                 fw = open(fname,'w')
                 fw.write(art['text'])
                 counter+=1
@@ -166,10 +167,10 @@ def main():
             for art in outputs:
                 art.pop('text')
                 dw.writerow(art)
-            
+
     if fcsv:
         fcsv.close()
-        
+
 
 if __name__ == '__main__':
     main()
