@@ -16,6 +16,7 @@ Features
 * Pull metadata from articles, e.g., lines beginning with [WORD]:
 * Let users define article start and stop boundaries
 * Pull information from Copyright line
+* Pull information from Date line
 * Extract CSV containing metadata
 * Read in from single lexisnexis text files, multiple files or a directory
 
@@ -36,3 +37,5 @@ Full Options
 * `-c` specifies the name of the csv file to write output to
 * `-o` specifies the location to write the output text files (one per article)
 * `-m` specifies the metadata to look for in a document.  Not every document needs to have this metadata!  It can only find metadata that is followed by a colon at the beginning of a line.  _Copyright can also be included as a potential metadata field, and will not be expected to begin a line followed by a colon._
+* `-dmy` is a flag to search for a line containing only a date, and
+  include it in the 'Date' field of the resulting file.

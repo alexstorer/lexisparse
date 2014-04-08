@@ -27,7 +27,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
+def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -85,11 +85,16 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 d[c] = res[0].strip()
         if docopyright:
             try:
-                #import code; code.interact(local=locals())
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
                 d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
                 print "*** Copyright line not found in article", i+1
+        if dodate:
+            try:
+                dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
+                d['Date'] = dateresult[0].strip()
+            except:
+                print "*** Date line not found in article", i+1
         articles.append(d)
     return articles
 
@@ -100,6 +105,7 @@ def main():
     group.add_argument('-f','--file', help='individual file(s) to process (e.g. /Users/jdoe/Downloads/foo.txt)', required=False, nargs='*')
     parser.add_argument('-c','--csvfile', help='the csv file containing the metadata', required=False, nargs=1)
     parser.add_argument('-o','--outfiles', help='the directory to write individual articles to', required=False, nargs=1)
+    parser.add_argument('-dmy','--date', help='look for a line with a date', required=False, action="store_true")
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
 
@@ -146,9 +152,9 @@ def main():
         print "Processing file: ", f
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'])
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'])
         else:
-            outputs = splitdocs(fp.read(),colnames=args['metadata'])
+            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'])
         print "...............{} articles found".format(len(outputs))
         if args["outfiles"] is not None:
             for art in outputs:
