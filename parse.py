@@ -153,7 +153,7 @@ def main():
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
-                fname = "{direc}{sep}{c:08d}.txt".format(direc=args['outfiles'][0],,sep=os.path.sep,c=counter)
+                fname = "{direc}{sep}{c:08d}.txt".format(direc=args['outfiles'][0],sep=os.path.sep,c=counter)
                 fw = open(fname,'w')
                 fw.write(art['text'])
                 counter+=1
