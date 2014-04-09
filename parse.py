@@ -40,7 +40,6 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
     colnames -- The list of metadata names in a list (default: ["LENGTH"])
     """
 
-    print fullstr[0:1000]
     if colnames is None or len(colnames)==0:
         colnames = ["LENGTH"]
     # process the column names for the copyright line
@@ -59,8 +58,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
     articles = []
     for i,s in enumerate(allsplits[1:]):
         #import code; code.interact(local=locals())
-        if topmarker is not None and re.search("\n"+topmarker+".{0,1}\n",s) is not None:
-            headersplit = re.split("\n"+topmarker+".{0,1}\n",s)
+        if topmarker is not None and re.search("\n"+topmarker+".+?\n",s) is not None:
+            headersplit = re.split("\n"+topmarker+".+?\n",s)
             header = headersplit[0]
             body = headersplit[1]
         else:
@@ -68,8 +67,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             body = s
             if topmarker is not None:
                 print "*** Marker", topmarker, "not found in article", i+1
-        if bottommarker is not None and re.search("\n"+bottommarker+".{0,1}\n",body) is not None:
-            bottomsplit = re.split("\n"+bottommarker+".{0,1}\n",body)
+        if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
+            bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
             footer = bottomsplit[1]
         else:
@@ -79,11 +78,13 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 print "*** Marker", bottommarker, "not found in article", i+1
 
         d = dict.fromkeys(colnames)
+        if dodate:
+            d['Date'] = None
         d['text'] = body.strip()
         for c in colnames:
-            res = re.findall("\n"+c+":(.+)?\r",s)
+            res = re.findall("\n"+c+":(.+)?(\r|\n)",s)
             if len(res)>0:
-                d[c] = res[0].strip()
+                d[c] = res[0][0].strip()
         if docopyright:
             try:
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
@@ -94,7 +95,6 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
                 d['Date'] = dateresult[0].strip()
-                print d['Date']
             except:
                 print "*** Date line not found in article", i+1
         articles.append(d)
@@ -123,6 +123,9 @@ def main():
         fieldnames += ['filename','originalfile']
     if args['metadata'] is not None:
         fieldnames += args['metadata']
+    if args['date']:
+        fieldnames += ['Date']
+        print fieldnames
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
