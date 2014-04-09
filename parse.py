@@ -40,6 +40,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
     colnames -- The list of metadata names in a list (default: ["LENGTH"])
     """
 
+    print fullstr[0:1000]
     if colnames is None or len(colnames)==0:
         colnames = ["LENGTH"]
     # process the column names for the copyright line
@@ -54,12 +55,12 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 # copyright is handled differently, but people can enter it the same way
                 docopyright = True
 
-    allsplits = re.split("\d+ of \d+ DOCUMENTS.+?",fullstr)
+    allsplits = re.split("\d+ of \d+ DOCUMENTS.{0,1}",fullstr)
     articles = []
     for i,s in enumerate(allsplits[1:]):
         #import code; code.interact(local=locals())
-        if topmarker is not None and re.search("\n"+topmarker+".+?\n",s) is not None:
-            headersplit = re.split("\n"+topmarker+".+?\n",s)
+        if topmarker is not None and re.search("\n"+topmarker+".{0,1}\n",s) is not None:
+            headersplit = re.split("\n"+topmarker+".{0,1}\n",s)
             header = headersplit[0]
             body = headersplit[1]
         else:
@@ -67,8 +68,8 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             body = s
             if topmarker is not None:
                 print "*** Marker", topmarker, "not found in article", i+1
-        if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
-            bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
+        if bottommarker is not None and re.search("\n"+bottommarker+".{0,1}\n",body) is not None:
+            bottomsplit = re.split("\n"+bottommarker+".{0,1}\n",body)
             body = bottomsplit[0]
             footer = bottomsplit[1]
         else:
@@ -93,6 +94,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
                 d['Date'] = dateresult[0].strip()
+                print d['Date']
             except:
                 print "*** Date line not found in article", i+1
         articles.append(d)
@@ -148,7 +150,7 @@ def main():
 
     counter = 0
     for f in files:
-        fp = open(f,'r')
+        fp = open(f,'rU')
         print "Processing file: ", f
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
