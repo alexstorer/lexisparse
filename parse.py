@@ -94,6 +94,9 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
         if dodate:
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
+                if header:
+                    dateresult += re.findall(r'\w+\s\d+.*\d{4}', header)
+                    dateresult += re.findall(r'\w+\s*\d{4}', header)
                 d['Date'] = dateresult[0].strip()
             except:
                 print "*** Date line not found in article", i+1
