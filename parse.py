@@ -27,7 +27,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False,dotitle=False): # I'm trying to add the "dotitle" operation, to extract the title
+def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -113,7 +113,6 @@ def main():
     parser.add_argument('-dmy','--date', help='look for a line with a date', required=False, action="store_true")
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
-    parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, nargs=1)
 
     args = vars(parser.parse_args())
 
@@ -136,14 +135,6 @@ def main():
         dw.writeheader()
     else:
         fcsv = False
-
-    if args["boundaries"] is not None:
-        bstart = args["boundaries"][0]
-        if bstart == 'None':
-            bstart = None
-        bend = args["boundaries"][1]
-        if bend == 'None':
-            bend = None
 
     if args["boundaries"] is not None:
         bstart = args["boundaries"][0]
