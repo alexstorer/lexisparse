@@ -27,7 +27,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False):
+def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False,dotitle=False): # I'm trying to add the "dotitle" operation, to extract the title
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -100,6 +100,19 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 d['Date'] = dateresult[0].strip()
             except:
                 print "*** Date line not found in article", i+1
+        if dotitle:
+            try:
+                """ Enter dodtile method here 
+                The title should be on line 7 of the header. There is occasionally an additional blank line. There are also cases in which it is missing, so this method may collect garbage too. 
+                """
+                ll = 7
+                title = ''
+                while title == '':
+                    title = header.split('\n')[ll].strip()
+                    ll = ll+1
+                d['Title'] = title
+            except:
+                print("*** Title line not found in article", i+1)
         articles.append(d)
     return articles
 
@@ -113,6 +126,7 @@ def main():
     parser.add_argument('-dmy','--date', help='look for a line with a date', required=False, action="store_true")
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
+    parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, action="store_true")
 
     args = vars(parser.parse_args())
 
@@ -128,7 +142,9 @@ def main():
         fieldnames += args['metadata']
     if args['date']:
         fieldnames += ['Date']
-        print fieldnames
+    if args['title']:
+        fieldnames += ['Title']
+    print fieldnames
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
@@ -136,7 +152,7 @@ def main():
     else:
         fcsv = False
 
-    if args["boundaries"] is not None:
+    if args["boundaries"] is not None: # Why is this block here twice?
         bstart = args["boundaries"][0]
         if bstart == 'None':
             bstart = None
@@ -152,9 +168,9 @@ def main():
         print "Processing file: ", f
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'])
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         else:
-            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'])
+            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         print "...............{} articles found".format(len(outputs))
         if args["outfiles"] is not None:
             for art in outputs:
