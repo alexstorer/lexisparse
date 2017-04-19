@@ -66,7 +66,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             header = ''
             body = s
             if topmarker is not None:
-                print "*** Marker", topmarker, "not found in article", i+1
+                print("*** Marker", topmarker, "not found in article", i+1)
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -75,7 +75,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             footer = ''
             body = body
             if bottommarker is not None:
-                print "*** Marker", bottommarker, "not found in article", i+1
+                print("*** Marker", bottommarker, "not found in article", i+1)
 
         d = dict.fromkeys(colnames)
         if dodate:
@@ -90,7 +90,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
                 d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
-                print "*** Copyright line not found in article", i+1
+                print("*** Copyright line not found in article", i+1)
         if dodate:
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
@@ -99,7 +99,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                     dateresult += re.findall(r'\w+\s*\d{4}', header)
                 d['Date'] = dateresult[0].strip()
             except:
-                print "*** Date line not found in article", i+1
+                print("*** Date line not found in article", i+1)
         if dotitle:
             try:
                 """ Enter dodtile method here 
@@ -144,7 +144,7 @@ def main():
         fieldnames += ['Date']
     if args['title']:
         fieldnames += ['Title']
-    print fieldnames
+    print(fieldnames)
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
@@ -165,13 +165,13 @@ def main():
     counter = 0
     for f in files:
         fp = open(f,'rU')
-        print "Processing file: ", f
+        print("Processing file: ", f)
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
             outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
-        print "...............{} articles found".format(len(outputs))
+        print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
