@@ -27,7 +27,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False,dotitle=False): # I'm trying to add the "dotitle" operation, to extract the title
+def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
