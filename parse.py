@@ -7,6 +7,7 @@ import glob
 import argparse
 import csv
 import os.path
+import progressbar
 
 def getcolumns(fullstr,percent=10):
     """
@@ -127,12 +128,12 @@ def main():
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
     parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, action="store_true")
+    parser.add_argument('-pbar','--progressbar', help='boolean, print progressbar instead of output for each filename', required=False, action="store_true")
 
     args = vars(parser.parse_args())
 
     if args['directory'] is not None:
         files = glob.glob(args['directory'][0]+os.path.sep+'*.txt') + glob.glob(args['directory'][0]+os.path.sep+'*.TXT')
-        if not os.path.isdir(args['directory']): os.mkdir(args['directory'])
     elif args['file'] is not None:
         files = args['file']
 
@@ -161,18 +162,28 @@ def main():
         if bend == 'None':
             bend = None
 
+    if args['progressbar'] is not None:
+        progress = True
+        bar = progressbar.ProgressBar(max_value=len(files))
+    else:
+        progress = False
+    
     outputs = []
 
     counter = 0
-    for f in files:
-        fp = open(f,'rU')
-        print("Processing file: ", f)
+
+    for j, f in enumerate(files):
+        fp = open(f,'rU')        
+        if progress is True:
+            bar.update(j)
+        else:
+            print("Processing file: ", f)
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
             outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
-        print("...............{} articles found".format(len(outputs)))
+        if progress is False: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
