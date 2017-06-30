@@ -183,7 +183,7 @@ def main():
             outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
-        if progress is True: print("...............{} articles found".format(len(outputs)))
+        if verbose is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
