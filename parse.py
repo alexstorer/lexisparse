@@ -162,7 +162,7 @@ def main():
         if bend == 'None':
             bend = None
 
-    if args['verbose'] is not None:
+    if args['verbose'] is True:
         verbose = True
     else:
         verbose=False
