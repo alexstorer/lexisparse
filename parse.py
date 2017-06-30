@@ -67,7 +67,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
             header = ''
             body = s
             if topmarker is not None:
-                print("*** Marker", topmarker, "not found in article", i+1)
+                if verbose is True: print("*** Marker", topmarker, "not found in article", i+1)
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -76,7 +76,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
             footer = ''
             body = body
             if bottommarker is not None:
-                print("*** Marker", bottommarker, "not found in article", i+1)
+                if verbose is True: print("*** Marker", bottommarker, "not found in article", i+1)
 
         d = dict.fromkeys(colnames)
         if dodate:
@@ -91,7 +91,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
                 d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
-                print("*** Copyright line not found in article", i+1)
+                if verbose is True: print("*** Copyright line not found in article", i+1)
         if dodate:
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
@@ -100,7 +100,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                     dateresult += re.findall(r'\w+\s*\d{4}', header)
                 d['Date'] = dateresult[0].strip()
             except:
-                print("*** Date line not found in article", i+1)
+                if verbose is True: print("*** Date line not found in article", i+1)
         if dotitle:
             try:
                 """ Enter dodtile method here 
@@ -113,7 +113,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                     ll = ll+1
                 d['Title'] = title
             except:
-                print("*** Title line not found in article", i+1)
+                if verbose is True: print("*** Title line not found in article", i+1)
         articles.append(d)
     return articles
 
@@ -128,7 +128,7 @@ def main():
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
     parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, action="store_true")
-    parser.add_argument('-pbar','--progressbar', help='boolean, print progressbar instead of output for each filename', required=False, action="store_true")
+    parser.add_argument('-v','--verbose', help='Print output for each file or print progressbar. Defaults to True', required=False, action="store_true")
 
     args = vars(parser.parse_args())
 
@@ -162,11 +162,11 @@ def main():
         if bend == 'None':
             bend = None
 
-    if args['progressbar'] is not None:
-        progress = True
-        bar = progressbar.ProgressBar(max_value=len(files))
+    if args['verbose'] is not None:
+        verbose = True
     else:
-        progress = False
+        verbose=False
+        bar = progressbar.ProgressBar(max_value=len(files))
     
     outputs = []
 
@@ -174,7 +174,7 @@ def main():
 
     for j, f in enumerate(files):
         fp = open(f,'rU')        
-        if progress is True:
+        if verbose is False:
             bar.update(j)
         else:
             print("Processing file: ", f)
@@ -183,7 +183,7 @@ def main():
             outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
-        if progress is False: print("...............{} articles found".format(len(outputs)))
+        if progress is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
