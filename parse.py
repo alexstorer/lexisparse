@@ -132,6 +132,7 @@ def main():
 
     if args['directory'] is not None:
         files = glob.glob(args['directory'][0]+os.path.sep+'*.txt') + glob.glob(args['directory'][0]+os.path.sep+'*.TXT')
+        if not os.path.isdir(args['directory']): os.mkdir(args['directory'])
     elif args['file'] is not None:
         files = args['file']
 
