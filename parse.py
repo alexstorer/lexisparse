@@ -28,7 +28,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False):
+def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False, verbose=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -179,7 +179,7 @@ def main():
             print("Processing file: ", f)
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=verbose)
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
         if verbose is True: print("...............{} articles found".format(len(outputs)))
