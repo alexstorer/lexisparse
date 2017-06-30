@@ -146,7 +146,6 @@ def main():
         fieldnames += ['Date']
     if args['title']:
         fieldnames += ['Title']
-    print(fieldnames)
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
