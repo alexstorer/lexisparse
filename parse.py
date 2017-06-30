@@ -7,6 +7,7 @@ import glob
 import argparse
 import csv
 import os.path
+import progressbar
 
 def getcolumns(fullstr,percent=10):
     """
@@ -27,7 +28,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False):
+def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False, verbose=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -66,7 +67,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
             header = ''
             body = s
             if topmarker is not None:
-                print("*** Marker", topmarker, "not found in article", i+1)
+                if verbose is True: print("*** Marker", topmarker, "not found in article", i+1)
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -75,7 +76,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
             footer = ''
             body = body
             if bottommarker is not None:
-                print("*** Marker", bottommarker, "not found in article", i+1)
+                if verbose is True: print("*** Marker", bottommarker, "not found in article", i+1)
 
         d = dict.fromkeys(colnames)
         if dodate:
@@ -90,7 +91,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
                 d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
-                print("*** Copyright line not found in article", i+1)
+                if verbose is True: print("*** Copyright line not found in article", i+1)
         if dodate:
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
@@ -99,7 +100,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                     dateresult += re.findall(r'\w+\s*\d{4}', header)
                 d['Date'] = dateresult[0].strip()
             except:
-                print("*** Date line not found in article", i+1)
+                if verbose is True: print("*** Date line not found in article", i+1)
         if dotitle:
             try:
                 """ Enter dodtile method here 
@@ -112,7 +113,7 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                     ll = ll+1
                 d['Title'] = title
             except:
-                print("*** Title line not found in article", i+1)
+                if verbose is True: print("*** Title line not found in article", i+1)
         articles.append(d)
     return articles
 
@@ -127,6 +128,7 @@ def main():
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
     parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, action="store_true")
+    parser.add_argument('-v','--verbose', help='Print output for each file or print progressbar. Defaults to True', required=False, action="store_true")
 
     args = vars(parser.parse_args())
 
@@ -144,7 +146,6 @@ def main():
         fieldnames += ['Date']
     if args['title']:
         fieldnames += ['Title']
-    print(fieldnames)
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
         dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
@@ -160,18 +161,28 @@ def main():
         if bend == 'None':
             bend = None
 
+    if args['verbose'] is True:
+        verbose = True
+    else:
+        verbose=False
+        bar = progressbar.ProgressBar(max_value=len(files))
+    
     outputs = []
 
     counter = 0
-    for f in files:
-        fp = open(f,'rU')
-        print("Processing file: ", f)
+
+    for j, f in enumerate(files):
+        fp = open(f,'rU')        
+        if verbose is False:
+            bar.update(j)
+        else:
+            print("Processing file: ", f)
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=verbose)
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
-        print("...............{} articles found".format(len(outputs)))
+        if verbose is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
                 #import code; code.interact(local=locals())
