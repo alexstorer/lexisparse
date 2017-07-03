@@ -148,7 +148,7 @@ def main():
         fieldnames += ['Title']
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
-        dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
+        dw = csv.DictWriter(fcsv, delimiter=',', fieldnames=fieldnames)
         dw.writeheader()
     else:
         fcsv = False
