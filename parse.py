@@ -193,8 +193,8 @@ def main():
                 fw.close()
                 if fcsv:
                     art.pop('text')
-                    art['filename'] = fname
-                    art['originalfile'] = f
+                    art['filename'] = os.path.basename(os.path.normpath(fname))
+                    art['originalfile'] = os.path.basename(os.path.normpath(f))
                     dw.writerow(art)
         elif fcsv:
             for art in outputs:
