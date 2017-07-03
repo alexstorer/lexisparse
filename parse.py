@@ -153,7 +153,7 @@ def main():
     else:
         fcsv = False
 
-    if args["boundaries"] is not None: # Why is this block here twice?
+    if args["boundaries"] is not None:
         bstart = args["boundaries"][0]
         if bstart == 'None':
             bstart = None
@@ -164,7 +164,7 @@ def main():
     if args['verbose'] is True:
         verbose = True
     else:
-        verbose=False
+        verbose = False
         bar = progressbar.ProgressBar(max_value=len(files))
     
     outputs = []
@@ -179,9 +179,9 @@ def main():
             print("Processing file: ", f)
         #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=verbose)
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
         else:
-            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'])
+            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
         if verbose is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
             for art in outputs:
