@@ -7,7 +7,7 @@ import glob
 import argparse
 import csv
 import os.path
-import progressbar
+from tqdm import tqdm
 
 def getcolumns(fullstr,percent=10):
     """
@@ -58,7 +58,6 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
     allsplits = re.split("\d+ of \d+ DOCUMENTS.{0,1}",fullstr)
     articles = []
     for i,s in enumerate(allsplits[1:]):
-        #import code; code.interact(local=locals())
         if topmarker is not None and re.search("\n"+topmarker+".+?\n",s) is not None:
             headersplit = re.split("\n"+topmarker+".+?\n",s)
             header = headersplit[0]
@@ -103,15 +102,22 @@ def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["
                 if verbose is True: print("*** Date line not found in article", i+1)
         if dotitle:
             try:
-                """ Enter dodtile method here 
-                The title should be on line 7 of the header. There is occasionally an additional blank line. There are also cases in which it is missing, so this method may collect garbage too. 
                 """
-                ll = 7
-                title = ''
-                while title == '':
-                    title = header.split('\n')[ll].strip()
-                    ll = ll+1
-                d['Title'] = title
+                Extracting the title is inexact.  One possible rule is to 
+                concatenate everything that isn't "centered" that isn't a
+                "metadata" (e.g., BYLINE:)
+                """
+                title = []
+                for line in header.split('\n'):
+                    if re.search('[A-Z]+:', line):
+                        # not part of a title
+                        title = title
+                    elif re.search('^\S', line):
+                        # it doesn't start with whiltespaced
+                        print(line)
+                        title.append(line)
+
+                d['Title'] = ';'.join(title)
             except:
                 if verbose is True: print("*** Title line not found in article", i+1)
         articles.append(d)
@@ -141,7 +147,9 @@ def main():
     if args['outfiles'] is not None:
         fieldnames += ['filename','originalfile']
     if args['metadata'] is not None:
-        fieldnames += args['metadata']
+        for m in args['metadata']:
+            if m not in fieldnames:
+                fieldnames.append(m)
     if args['date']:
         fieldnames += ['Date']
     if args['title']:
@@ -165,44 +173,57 @@ def main():
         verbose = True
     else:
         verbose = False
-        bar = progressbar.ProgressBar(max_value=len(files))
+        #bar = progressbar.ProgressBar(max_value=len(files))
+        bar = tqdm(total=len(files))
     
     outputs = []
 
     counter = 0
 
     for j, f in enumerate(files):
-        fp = open(f,'rU')        
+        fp = open(f,'rU')
         if verbose is False:
-            bar.update(j)
+            bar.set_description("Processing {}".format(f))
+            bar.update(1)
         else:
             print("Processing file: ", f)
-        #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
         if args['boundaries'] is not None:
             outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
         else:
             outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
         if verbose is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
+            # Iterating over articles
             for art in outputs:
-                #import code; code.interact(local=locals())
                 fname = "{direc}{sep}{c:08d}.txt".format(direc=args['outfiles'][0],sep=os.path.sep,c=counter)
                 fw = open(fname,'w')
                 fw.write(art['text'])
                 counter+=1
                 fw.close()
                 if fcsv:
-                    art.pop('text')
+                    # Remove the fields we don't want to write
+                    dfields = [k for k in art.keys()]
+                    for colname in dfields:
+                        if colname not in dw.fieldnames:
+                            art.pop(colname)
                     art['filename'] = os.path.basename(os.path.normpath(fname))
                     art['originalfile'] = os.path.basename(os.path.normpath(f))
                     dw.writerow(art)
         elif fcsv:
             for art in outputs:
-                art.pop('text')
+                # Remove the fields we don't want to write
+                dfields = [k for k in art.keys()]
+                for colname in dfields:
+                    if colname not in dw.fieldnames:
+                        art.pop(colname)
                 dw.writerow(art)
 
     if fcsv:
         fcsv.close()
+
+    if verbose is False:
+        #bar.close()
+        pass
 
 
 if __name__ == '__main__':

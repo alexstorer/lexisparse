@@ -38,5 +38,5 @@ Full Options
 * `-o` specifies the location to write the output text files (one per article)
 * `-m` specifies the metadata to look for in a document.  Not every document needs to have this metadata!  It can only find metadata that is followed by a colon at the beginning of a line.  _Copyright can also be included as a potential metadata field, and will not be expected to begin a line followed by a colon._
 * `-dmy` is a flag to search for a line containing only a date, and include it in the 'Date' field of the resulting file.
-* `-t` is a flag to extract the title from the file and add it to the csv. This feature is still somewhat beta.
-* `-v` verbose, print output for each file scanned. If false, print a progress bar. 
+* `-t` is a flag to extract the title from the file and add it to the csv. This feature is experimental.
+* `-v` verbose, print output for each file scanned. If false, print a progress bar.
