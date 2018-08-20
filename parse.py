@@ -7,6 +7,7 @@ import glob
 import argparse
 import csv
 import os.path
+from tqdm import tqdm
 
 def getcolumns(fullstr,percent=10):
     """
@@ -27,7 +28,7 @@ def getcolumns(fullstr,percent=10):
 
     return [c for c in d.keys() if d[c]>(max(d.values())*percent/100.0)]
 
-def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"],dodate=False):
+def splitdocs(fullstr, topmarker="LENGTH", bottommarker="LOAD-DATE", colnames=["LENGTH"], dodate=False, dotitle=False, verbose=False):
     """
     Return a list of dictionaries containing articles and metadata.
 
@@ -57,7 +58,6 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
     allsplits = re.split("\d+ of \d+ DOCUMENTS.{0,1}",fullstr)
     articles = []
     for i,s in enumerate(allsplits[1:]):
-        #import code; code.interact(local=locals())
         if topmarker is not None and re.search("\n"+topmarker+".+?\n",s) is not None:
             headersplit = re.split("\n"+topmarker+".+?\n",s)
             header = headersplit[0]
@@ -66,7 +66,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             header = ''
             body = s
             if topmarker is not None:
-                print "*** Marker", topmarker, "not found in article", i+1
+                if verbose is True: print("*** Marker", topmarker, "not found in article", i+1)
         if bottommarker is not None and re.search("\n"+bottommarker+".+?\n",body) is not None:
             bottomsplit = re.split("\n"+bottommarker+".+?\n",body)
             body = bottomsplit[0]
@@ -75,7 +75,7 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
             footer = ''
             body = body
             if bottommarker is not None:
-                print "*** Marker", bottommarker, "not found in article", i+1
+                if verbose is True: print("*** Marker", bottommarker, "not found in article", i+1)
 
         d = dict.fromkeys(colnames)
         if dodate:
@@ -90,13 +90,36 @@ def splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LEN
                 copyresult = re.findall(r'\n\s+(Copyright|\N{COPYRIGHT SIGN}|©)\s+(.*)\n',s,flags=re.IGNORECASE)
                 d['COPYRIGHT'] = copyresult[0][1].strip()
             except:
-                print "*** Copyright line not found in article", i+1
+                if verbose is True: print("*** Copyright line not found in article", i+1)
         if dodate:
             try:
                 dateresult = re.findall(r'\n\s{5}.*\d+.*\d{4}\s',s,flags=re.IGNORECASE)
+                if header:
+                    dateresult += re.findall(r'\w+\s\d+.*\d{4}', header)
+                    dateresult += re.findall(r'\w+\s*\d{4}', header)
                 d['Date'] = dateresult[0].strip()
             except:
-                print "*** Date line not found in article", i+1
+                if verbose is True: print("*** Date line not found in article", i+1)
+        if dotitle:
+            try:
+                """
+                Extracting the title is inexact.  One possible rule is to 
+                concatenate everything that isn't "centered" that isn't a
+                "metadata" (e.g., BYLINE:)
+                """
+                title = []
+                for line in header.split('\n'):
+                    if re.search('[A-Z]+:', line):
+                        # not part of a title
+                        title = title
+                    elif re.search('^\S', line):
+                        # it doesn't start with whiltespaced
+                        print(line)
+                        title.append(line)
+
+                d['Title'] = ';'.join(title)
+            except:
+                if verbose is True: print("*** Title line not found in article", i+1)
         articles.append(d)
     return articles
 
@@ -110,6 +133,8 @@ def main():
     parser.add_argument('-dmy','--date', help='look for a line with a date', required=False, action="store_true")
     parser.add_argument('-m','--metadata', help='the metadata to scrape from individual articles', required=False, nargs='*')
     parser.add_argument('-b','--boundaries', help='the metadata before an article begins, and after it ends.  If there is only a beginning or ending metadata tag, use None.', required=False, nargs=2)
+    parser.add_argument('-t','--title', help='boolean, extract title and add to csv file.', required=False, action="store_true")
+    parser.add_argument('-v','--verbose', help='Print output for each file or print progressbar. Defaults to True', required=False, action="store_true")
 
     args = vars(parser.parse_args())
 
@@ -122,13 +147,16 @@ def main():
     if args['outfiles'] is not None:
         fieldnames += ['filename','originalfile']
     if args['metadata'] is not None:
-        fieldnames += args['metadata']
+        for m in args['metadata']:
+            if m not in fieldnames:
+                fieldnames.append(m)
     if args['date']:
         fieldnames += ['Date']
-        print fieldnames
+    if args['title']:
+        fieldnames += ['Title']
     if args["csvfile"] is not None:
         fcsv = open(args["csvfile"][0],'w')
-        dw = csv.DictWriter(fcsv, delimiter='\t', fieldnames=fieldnames)
+        dw = csv.DictWriter(fcsv, delimiter=',', fieldnames=fieldnames)
         dw.writeheader()
     else:
         fcsv = False
@@ -141,46 +169,61 @@ def main():
         if bend == 'None':
             bend = None
 
-    if args["boundaries"] is not None:
-        bstart = args["boundaries"][0]
-        if bstart == 'None':
-            bstart = None
-        bend = args["boundaries"][1]
-        if bend == 'None':
-            bend = None
-
+    if args['verbose'] is True:
+        verbose = True
+    else:
+        verbose = False
+        #bar = progressbar.ProgressBar(max_value=len(files))
+        bar = tqdm(total=len(files))
+    
     outputs = []
 
     counter = 0
-    for f in files:
+
+    for j, f in enumerate(files):
         fp = open(f,'rU')
-        print "Processing file: ", f
-        #splitdocs(fullstr,topmarker="LENGTH",bottommarker="LOAD-DATE",colnames=["LENGTH"]):
-        if args['boundaries'] is not None:
-            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'])
+        if verbose is False:
+            bar.set_description("Processing {}".format(f))
+            bar.update(1)
         else:
-            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'])
-        print "...............{} articles found".format(len(outputs))
+            print("Processing file: ", f)
+        if args['boundaries'] is not None:
+            outputs = splitdocs(fp.read(),topmarker=bstart,bottommarker=bend,colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
+        else:
+            outputs = splitdocs(fp.read(),colnames=args['metadata'],dodate=args['date'],dotitle=args['title'],verbose=args['verbose'])
+        if verbose is True: print("...............{} articles found".format(len(outputs)))
         if args["outfiles"] is not None:
+            # Iterating over articles
             for art in outputs:
-                #import code; code.interact(local=locals())
                 fname = "{direc}{sep}{c:08d}.txt".format(direc=args['outfiles'][0],sep=os.path.sep,c=counter)
                 fw = open(fname,'w')
                 fw.write(art['text'])
                 counter+=1
                 fw.close()
                 if fcsv:
-                    art.pop('text')
-                    art['filename'] = fname
-                    art['originalfile'] = f
+                    # Remove the fields we don't want to write
+                    dfields = [k for k in art.keys()]
+                    for colname in dfields:
+                        if colname not in dw.fieldnames:
+                            art.pop(colname)
+                    art['filename'] = os.path.basename(os.path.normpath(fname))
+                    art['originalfile'] = os.path.basename(os.path.normpath(f))
                     dw.writerow(art)
         elif fcsv:
             for art in outputs:
-                art.pop('text')
+                # Remove the fields we don't want to write
+                dfields = [k for k in art.keys()]
+                for colname in dfields:
+                    if colname not in dw.fieldnames:
+                        art.pop(colname)
                 dw.writerow(art)
 
     if fcsv:
         fcsv.close()
+
+    if verbose is False:
+        #bar.close()
+        pass
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ A simple tool to process plain text output from Lexis Nexis news searches
 
 Requirements
 ---
-* Python 2.7 or higher
+* Python 3.0 or higher
 
 _It is possible to write a backward compatible version if necessary_
 
@@ -37,5 +37,6 @@ Full Options
 * `-c` specifies the name of the csv file to write output to
 * `-o` specifies the location to write the output text files (one per article)
 * `-m` specifies the metadata to look for in a document.  Not every document needs to have this metadata!  It can only find metadata that is followed by a colon at the beginning of a line.  _Copyright can also be included as a potential metadata field, and will not be expected to begin a line followed by a colon._
-* `-dmy` is a flag to search for a line containing only a date, and
-  include it in the 'Date' field of the resulting file.
+* `-dmy` is a flag to search for a line containing only a date, and include it in the 'Date' field of the resulting file.
+* `-t` is a flag to extract the title from the file and add it to the csv. This feature is experimental.
+* `-v` verbose, print output for each file scanned. If false, print a progress bar.
